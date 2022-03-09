@@ -1,0 +1,91 @@
+{
+    "addons": [
+        {
+            "plan": "heroku-postgresql"
+        }
+    ],
+    "buildpacks": [
+        {
+            "url": "https://github.com/heroku/heroku-buildpack-google-chrome"
+        },
+        {
+            "url": "https://github.com/heroku/heroku-buildpack-chromedriver"
+        }
+    ],
+    "description": "A modular Telegram userbot running on Python 3.9 with an sqlalchemy database,",
+    "env": {
+        "api_hash": {
+            "description": "Custom message for .alive command. We have our own alive message by default.",
+            "required": false,
+            "value": ""
+        },
+        "api_id": {
+            "description": "Get this value from my.telegram.org.",
+            "required": true,
+            "value": ""
+        },
+        "bot_token": {
+            "description": "Get this value from my.telegram.org.",
+            "required": true
+        },
+        "del_cmds": {
+            "description": "It changes your bot pattern (default pattern is '.' (dot)).",
+            "required": false
+        },
+        "load": {
+            "description": "ChromeDriver location for selenium based modules.",
+            "required": false,
+            "value": ""
+        },
+        "message_dump": {
+            "description": "Add the Heroku app name here. Required for updates.",
+            "required": true
+        },
+        "no_load": {
+            "description": "Heroku API key, get it from 'https://dashboard.heroku.com/account. Required for updates.",
+            "required": true
+        },
+        "owner_id": {
+            "description": "Chat ID of the Log group. If value is 0, log feature not work. If value is left blank, logs send in Saved Messages",
+            "required": false
+        },
+        "spamwatch_api": {
+            "description": "If you need verbosity on the console logging.",
+            "required": false,
+            "value": "1CU5lS9TxngN14mGKUPkL969SCmRueKPs1FtpslBrrH7uWSGmgxAPC9xPBKh6AXD"
+        },
+        "strict_antispam": {
+            "description": "PM Auto Ban Feature. Also known as 'bleep blop, this is a bot...'.",
+            "required": false,
+            "value": "False"
+        },
+        "sudo_users": {
+            "description": "Custom PM Message Count for PM Auto Ban feature. Also known as Pmpermit Module.",
+            "required": false,
+            "value": "5"
+        },
+        "workers": {
+            "description": "Custom message for PM Auto Ban feature. Also known as Pmpermit Module.",
+            "required": false
+        }
+    },
+    "formation": {
+        "seden": {
+            "quantity": 1,
+            "size": "free"
+        }
+    },
+    "keywords": [
+        "telegram",
+        "python",
+        "module",
+        "pyrogram",
+        "postgresql"
+    ],
+    "logo": "https://i.imgur.com/GL1yJpN.png",
+    "name": "Telegram",
+    "repository": "https://github.com/thedeveloper12/GroupHelperV2",
+    "success_url": "https://telegram.dog/SedenUserBot",
+    "stack": "container",
+    "website": "https://teamderuntergang.github.io/"
+}
