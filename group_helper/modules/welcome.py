@@ -172,7 +172,8 @@ def new_member(update: Update, context: CallbackContext):
                             pass
                         reply = False
                     # Formatting text
-                    first_name = new_mem.first_name or "PersonWithNoName"  # edge case of empty name - occurs for some bugs.
+                    # edge case of empty name - occurs for some bugs.
+                    first_name = new_mem.first_name or "PersonWithNoName"
                     if new_mem.last_name:
                         fullname = "{} {}".format(first_name,
                                                   new_mem.last_name)
@@ -257,7 +258,8 @@ def new_member(update: Update, context: CallbackContext):
                                              reply_to_message_id=reply)
                     return
                 # else, move on
-                first_name = new_mem.first_name or "PersonWithNoName"  # edge case of empty name - occurs for some bugs.
+                # edge case of empty name - occurs for some bugs.
+                first_name = new_mem.first_name or "PersonWithNoName"
 
                 if cust_welcome:
                     if new_mem.last_name:
@@ -426,7 +428,8 @@ def left_member(update: Update, context: CallbackContext):
                         pass
                     reply = False
                 # Formatting text
-                first_name = left_mem.first_name or "PersonWithNoName"  # edge case of empty name - occurs for some bugs.
+                # edge case of empty name - occurs for some bugs.
+                first_name = left_mem.first_name or "PersonWithNoName"
                 if left_mem.last_name:
                     fullname = "{} {}".format(first_name, left_mem.last_name)
                 else:
@@ -462,13 +465,14 @@ def left_member(update: Update, context: CallbackContext):
                                             reply_to_message_id=reply)
                 return
 
-            first_name = left_mem.first_name or "PersonWithNoName"  # edge case of empty name - occurs for some bugs.
+            # edge case of empty name - occurs for some bugs.
+            first_name = left_mem.first_name or "PersonWithNoName"
             if cust_goodbye:
                 if left_mem.last_name:
                     fullname = "{} {}".format(first_name, left_mem.last_name)
                 else:
                     fullname = first_name
-                count = chat.get_members_count()
+                count = chat.get_member_count()
                 mention = mention_html(left_mem.id, first_name)
                 if left_mem.username:
                     username = "@" + escape(left_mem.username)
@@ -578,7 +582,7 @@ def security_text(update: Update, context: CallbackContext) -> str:
     else:
         update.effective_message.reply_text(tld(
             chat.id, 'welcome_mute_btn_curr_text').format(cust_text),
-                                            parse_mode="markdown")
+            parse_mode="markdown")
 
 
 @user_admin
@@ -590,7 +594,7 @@ def security_text_reset(update: Update, context: CallbackContext):
     update.effective_message.reply_text(tld(
         chat.id, 'welcome_mute_btn_text_reset').format(
             tld(chat.id, 'welcome_mute_btn_default_text')),
-                                        parse_mode="markdown")
+        parse_mode="markdown")
 
 
 @user_admin
@@ -621,11 +625,11 @@ def cleanservice(update: Update, context: CallbackContext) -> str:
         if curr:
             update.effective_message.reply_text(tld(
                 chat.id, 'welcome_clean_service_on'),
-                                                parse_mode=ParseMode.MARKDOWN)
+                parse_mode=ParseMode.MARKDOWN)
         else:
             update.effective_message.reply_text(tld(
                 chat.id, 'welcome_clean_service_off'),
-                                                parse_mode=ParseMode.MARKDOWN)
+                parse_mode=ParseMode.MARKDOWN)
 
 
 @user_admin
@@ -720,7 +724,7 @@ def goodbye(update: Update, context: CallbackContext):
 
         update.effective_message.reply_text(tld(
             chat.id, 'welcome_goodbye_settings').format(pref),
-                                            parse_mode=ParseMode.MARKDOWN)
+            parse_mode=ParseMode.MARKDOWN)
 
         if goodbye_type == sql.Types.BUTTON_TEXT:
             buttons = sql.get_gdbye_buttons(chat.id)
@@ -894,7 +898,7 @@ def clean_welcome(update: Update, context: CallbackContext) -> str:
                "\n#CLEAN_WELCOME" \
                "\n<b>Admin:</b> {}" \
                "\nHas toggled clean welcomes to <code>OFF</code>.".format(escape(chat.title),
-                                                                                   mention_html(user.id, user.first_name))
+                                                                          mention_html(user.id, user.first_name))
     else:
         # idek what you're writing, say yes or no
         update.effective_message.reply_text(
