@@ -60,7 +60,7 @@ def connect_chat(update: Update, context: CallbackContext):
                     and context.bot.get_chat_member(
                         connect_chat,
                         update.effective_message.from_user.id).status in
-                ('member')) or (user.id in CONFIG.sudo_users):
+                    ('member')) or (user.id in CONFIG.sudo_users):
 
                 connection_status = sql.connect(
                     update.effective_message.from_user.id, connect_chat)
@@ -156,7 +156,7 @@ def disconnect_chat(update: Update, context: CallbackContext):
         if disconnection_status:
             sql.disconnected_chat = update.effective_message.reply_text(
                 tld(chat.id, "connection_dis_success"))
-            #Rebuild user's keyboard
+            # Rebuild user's keyboard
             keyboard(update, context)
         else:
             update.effective_message.reply_text(
@@ -179,7 +179,7 @@ def connected(update: Update,
             (sql.allow_connect_to_chat(connect_chat) == True)
                 and context.bot.get_chat_member(
                     user_id, update.effective_message.from_user.id).status in
-            ('member')) or (user_id in CONFIG.sudo_users):
+                ('member')) or (user_id in CONFIG.sudo_users):
             if need_admin:
                 if context.bot.get_chat_member(
                         conn_id,

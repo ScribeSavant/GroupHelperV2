@@ -35,8 +35,7 @@ class GroupHelperConfig(BaseModel):
 
 
 logging.basicConfig(
-    format=
-    "[%(levelname)s %(asctime)s] Module '%(module)s', function '%(funcName)s' at line %(lineno)d -> %(message)s",
+    format="[%(levelname)s %(asctime)s] Module '%(module)s', function '%(funcName)s' at line %(lineno)d -> %(message)s",
     level=logging.INFO)
 logging.info("Starting group_helper...")
 

@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+__init__ copy.py
 # C extensions
 *.so
 
@@ -153,3 +153,5 @@ cython_debug/
 
 # group helper
 group_helper.session
+config.env
+config.json

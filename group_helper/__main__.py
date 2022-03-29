@@ -33,7 +33,8 @@ GDPR = []
 importlib.import_module("group_helper.modules.tr_engine.language")
 
 for module_name in ALL_MODULES:
-    imported_module = importlib.import_module("group_helper.modules." + module_name)
+    imported_module = importlib.import_module(
+        "group_helper.modules." + module_name)
     modname = imported_module.__name__.split('.')[2]
 
     if not modname.lower() in IMPORTED:
@@ -229,7 +230,7 @@ def get_help(update: Update, context: CallbackContext):
 
         update.effective_message.reply_text(tld(
             chat.id, "help_not_found").format(args[1]),
-                                            parse_mode=ParseMode.HTML)
+            parse_mode=ParseMode.HTML)
         return
 
     send_help(
