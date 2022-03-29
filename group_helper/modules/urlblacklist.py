@@ -13,6 +13,7 @@ from group_helper.modules.disable import DisableAbleCommandHandler
 from group_helper.modules.helper_funcs.chat_status import user_admin, user_not_admin
 from group_helper.modules.sql import urlblacklist_sql as sql
 from group_helper.modules.tr_engine.strings import tld
+from group_helper.modules.connection import connected
 
 
 @user_admin
@@ -41,13 +42,13 @@ def add_blacklist_url(update: Update, context: CallbackContext):
                     chat.id, "url_blacklist_success").format(
                         html.escape(extract_url.domain + "." +
                                     extract_url.suffix)),
-                                   parse_mode=ParseMode.HTML)
+                    parse_mode=ParseMode.HTML)
             else:
                 message.reply_text(tld(chat.id, "url_blacklist_invalid"))
         else:
             message.reply_text(tld(chat.id, "url_blacklist_success_2").format(
                 len(blacklisted)),
-                               parse_mode=ParseMode.HTML)
+                parse_mode=ParseMode.HTML)
     else:
         message.reply_text(tld(chat.id, "url_blacklist_invalid_2"))
 
@@ -102,6 +103,9 @@ def del_blacklist_url(update: Update, context: CallbackContext):
     chat = update.effective_chat
     message = update.effective_message
     parsed_entities = message.parse_entities(types=["url"])
+    if sql.is_delete_all(chat.id):
+        if 'http' in message.text or 'wwww' in message.text or 'https' in message.text or 'bit.ly' in message.text:
+            message.delete()
     extracted_domains = []
     for obj, url in parsed_entities.items():
         extract_url = tldextract.extract(url)
@@ -156,7 +160,7 @@ GET_BLACKLISTED_URLS = CommandHandler("geturl",
                                       run_async=True,
                                       filters=Filters.chat_type.groups)
 
-URL_DELETE_HANDLER = MessageHandler(Filters.entity("url"),
+URL_DELETE_HANDLER = MessageHandler(Filters.text,
                                     del_blacklist_url,
                                     run_async=True)
 
