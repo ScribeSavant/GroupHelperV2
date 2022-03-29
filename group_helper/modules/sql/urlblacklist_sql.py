@@ -1,6 +1,6 @@
 import threading
 
-from sqlalchemy import Column, String, UnicodeText
+from sqlalchemy import Column, String, UnicodeText, Boolean
 
 from group_helper.modules.sql import BASE, SESSION
 
@@ -9,10 +9,12 @@ class URLBlackListFilters(BASE):
     __tablename__ = "url_blacklist"
     chat_id = Column(String(14), primary_key=True)
     domain = Column(UnicodeText, primary_key=True, nullable=False)
+    delete_all = Column(Boolean, default=True)
 
-    def __init__(self, chat_id, domain):
+    def __init__(self, chat_id, domain, delete_all=True):
         self.chat_id = str(chat_id)
         self.domain = str(domain)
+        self.delete_all = bool(delete_all)
 
 
 URLBlackListFilters.__table__.create(checkfirst=True)
@@ -29,6 +31,15 @@ def blacklist_url(chat_id, domain):
         SESSION.merge(domain_filt)
         SESSION.commit()
         CHAT_URL_BLACKLISTS.setdefault(str(chat_id), set()).add(domain)
+
+
+def is_delete_all(chat_id):
+    a = SESSION.query(URLBlackListFilters).filter(
+        URLBlackListFilters.chat_id == str(chat_id)).first()
+    if a:
+        return True
+    else:
+        return False
 
 
 def rm_url_from_blacklist(chat_id, domain):
