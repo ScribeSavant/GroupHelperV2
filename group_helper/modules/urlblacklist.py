@@ -160,7 +160,7 @@ GET_BLACKLISTED_URLS = CommandHandler("geturl",
                                       run_async=True,
                                       filters=Filters.chat_type.groups)
 
-URL_DELETE_HANDLER = MessageHandler(Filters.text & ~Filters.command,
+URL_DELETE_HANDLER = MessageHandler(Filters.entity("url"),
                                     del_blacklist_url,
                                     run_async=True)
 
