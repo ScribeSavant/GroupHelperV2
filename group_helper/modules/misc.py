@@ -449,8 +449,7 @@ MD_HELP_HANDLER = CommandHandler("markdownhelp",
 
 STATS_HANDLER = CommandHandler("stats",
                                stats,
-                               run_async=True,
-                               filters=Filters.user(CONFIG.owner_id))
+                               run_async=True)
 GDPR_HANDLER = CommandHandler("gdpr",
                               gdpr,
                               run_async=True,
