@@ -10,7 +10,7 @@ from telegram.error import BadRequest
 from telegram.ext import MessageHandler, Filters, CommandHandler, CallbackQueryHandler
 from telegram.ext.callbackcontext import CallbackContext
 from telegram.utils.helpers import mention_html
-
+from group_helper.modules.connection import connected
 import group_helper.modules.sql.welcome_sql as sql
 from group_helper import CONFIG
 from group_helper.modules.helper_funcs.chat_status import user_admin, is_user_ban_protected
@@ -40,8 +40,10 @@ ENUM_FUNC_MAP = {
 
 # do not async
 def send(update, message, keyboard, backup_message):
+    print('hello')
     chat = update.effective_chat
     cleanserv = sql.clean_service(chat.id)
+    print(cleanserv)
     reply = update.message.message_id
     # Clean service welcome
     if cleanserv:
@@ -123,11 +125,10 @@ def send(update, message, keyboard, backup_message):
 
 def new_member(update: Update, context: CallbackContext):
     chat = update.effective_chat  # type: Optional[Chat]
-    context.bot.delete_message(
-        chat_id=update.message.chat_id, message_id=update.message.message_id)
 
     should_welc, cust_welcome, cust_content, welc_type = sql.get_welc_pref(
         chat.id)
+    print(should_welc)
     if cust_welcome:
         cust_welcome = markdown_to_html(cust_welcome)
 
@@ -266,7 +267,7 @@ def new_member(update: Update, context: CallbackContext):
                                                   new_mem.last_name)
                     else:
                         fullname = first_name
-                    count = chat.get_members_count()
+                    count = chat.get_member_count()
                     mention = mention_html(new_mem.id, first_name)
                     if new_mem.username:
                         username = "@" + escape(new_mem.username)
@@ -505,37 +506,46 @@ def left_member(update: Update, context: CallbackContext):
 def security(update: Update, context: CallbackContext) -> str:
     args = context.args
     chat = update.effective_chat  # type: Optional[Chat]
-    getcur, cur_value, cust_text = sql.welcome_security(chat.id)
+    user = update.effective_user  # type: Optional[User]
+    conn = connected(update, context, user)
+    if conn:
+        chat_id = conn
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+    getcur, cur_value, cust_text = sql.welcome_security(chat_id)
     if len(args) >= 1:
         var = args[0].lower()
         if (var == "yes" or var == "y" or var == "on"):
-            check = context.bot.getChatMember(chat.id, context.bot.id)
+            check = context.bot.getChatMember(chat_id, context.bot.id)
             if check.status == 'member' or check[
                     'can_restrict_members'] == False:
-                text = tld(chat.id, 'welcome_mute_bot_cant_mute')
+                text = tld(chat_id, 'welcome_mute_bot_cant_mute')
                 update.effective_message.reply_text(text,
                                                     parse_mode="markdown")
                 return ""
-            sql.set_welcome_security(chat.id, True, str(cur_value), cust_text)
+            sql.set_welcome_security(chat_id, True, str(cur_value), cust_text)
             update.effective_message.reply_text(
-                tld(chat.id, 'welcome_mute_enabled'))
+                tld(chat_id, 'welcome_mute_enabled'))
         elif (var == "no" or var == "n" or var == "off"):
-            sql.set_welcome_security(chat.id, False, str(cur_value), cust_text)
+            sql.set_welcome_security(chat_id, False, str(cur_value), cust_text)
             update.effective_message.reply_text(
-                tld(chat.id, 'welcome_mute_disabled'))
+                tld(chat_id, 'welcome_mute_disabled'))
         else:
-            update.effective_message.reply_text(tld(chat.id,
+            update.effective_message.reply_text(tld(chat_id,
                                                     'common_invalid_arg'),
                                                 parse_mode=ParseMode.MARKDOWN)
     else:
-        getcur, cur_value, cust_text = sql.welcome_security(chat.id)
+        getcur, cur_value, cust_text = sql.welcome_security(chat_id)
         if getcur:
             getcur = "True"
         else:
             getcur = "False"
         if cur_value[:1] == "0":
             cur_value = "None"
-        text = tld(chat.id, 'welcome_mute_curr_settings').format(
+        text = tld(chat_id, 'welcome_mute_curr_settings').format(
             getcur, cur_value, cust_text)
         update.effective_message.reply_text(text, parse_mode="markdown")
 
@@ -545,54 +555,81 @@ def security_mute(update: Update, context: CallbackContext) -> str:
     args = context.args
     chat = update.effective_chat  # type: Optional[Chat]
     message = update.effective_message  # type: Optional[Message]
-    getcur, cur_value, cust_text = sql.welcome_security(chat.id)
+    user = update.effective_user  # type: Optional[User]
+    conn = connected(update, context, user)
+    if conn:
+        chat_id = conn
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+    getcur, cur_value, cust_text = sql.welcome_security(chat_id)
     if len(args) >= 1:
         var = args[0]
         if var[:1] == "0":
             mutetime = "0"
-            sql.set_welcome_security(chat.id, getcur, "0", cust_text)
-            text = tld(chat.id, 'welcome_mute_time_none')
+            sql.set_welcome_security(chat_id, getcur, "0", cust_text)
+            text = tld(chat_id, 'welcome_mute_time_none')
         else:
             mutetime = extract_time(message, var)
             if mutetime == "":
                 return
-            sql.set_welcome_security(chat.id, getcur, str(var), cust_text)
-            text = tld(chat.id, 'welcome_mute_time').format(var)
+            sql.set_welcome_security(chat_id, getcur, str(var), cust_text)
+            text = tld(chat_id, 'welcome_mute_time').format(var)
         update.effective_message.reply_text(text)
     else:
         if str(cur_value) == "0":
             update.effective_message.reply_text(
-                tld(chat.id, 'welcome_mute_time_settings_none'))
+                tld(chat_id, 'welcome_mute_time_settings_none'))
         else:
             update.effective_message.reply_text(
-                tld(chat.id, 'welcome_mute_time_settings').format(cur_value))
+                tld(chat_id, 'welcome_mute_time_settings').format(cur_value))
 
 
 @user_admin
 def security_text(update: Update, context: CallbackContext) -> str:
     args = context.args
     chat = update.effective_chat  # type: Optional[Chat]
-    getcur, cur_value, cust_text = sql.welcome_security(chat.id)
+    user = update.effective_user  # type: Optional[User]
+    conn = connected(update, context, user)
+    if conn:
+        chat_id = conn
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+    getcur, cur_value, cust_text = sql.welcome_security(chat_id)
     if len(args) >= 1:
         text = " ".join(args)
-        sql.set_welcome_security(chat.id, getcur, cur_value, text)
-        text = tld(chat.id, 'welcome_mute_btn_text_changed').format(text)
+        sql.set_welcome_security(chat_id, getcur, cur_value, text)
+        text = tld(chat_id, 'welcome_mute_btn_text_changed').format(text)
         update.effective_message.reply_text(text, parse_mode="markdown")
     else:
         update.effective_message.reply_text(tld(
-            chat.id, 'welcome_mute_btn_curr_text').format(cust_text),
+            chat_id, 'welcome_mute_btn_curr_text').format(cust_text),
             parse_mode="markdown")
 
 
 @user_admin
 def security_text_reset(update: Update, context: CallbackContext):
     chat = update.effective_chat  # type: Optional[Chat]
-    getcur, cur_value, cust_text = sql.welcome_security(chat.id)
-    sql.set_welcome_security(chat.id, getcur, cur_value,
-                             tld(chat.id, 'welcome_mute_btn_default_text'))
+    user = update.effective_user  # type: Optional[User]
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+    getcur, cur_value, cust_text = sql.welcome_security(chat_id)
+    sql.set_welcome_security(chat_id, getcur, cur_value,
+                             tld(chat_id, 'welcome_mute_btn_default_text'))
     update.effective_message.reply_text(tld(
-        chat.id, 'welcome_mute_btn_text_reset').format(
-            tld(chat.id, 'welcome_mute_btn_default_text')),
+        chat_id, 'welcome_mute_btn_text_reset').format(
+            tld(chat_id, 'welcome_mute_btn_default_text')),
         parse_mode="markdown")
 
 
@@ -600,71 +637,80 @@ def security_text_reset(update: Update, context: CallbackContext):
 def cleanservice(update: Update, context: CallbackContext) -> str:
     args = context.args
     chat = update.effective_chat  # type: Optional[Chat]
-    if chat.type != chat.PRIVATE:
-        if len(args) >= 1:
-            var = args[0]
-            if (var == "no" or var == "off"):
-                sql.set_clean_service(chat.id, False)
-                update.effective_message.reply_text(
-                    tld(chat.id, 'welcome_clean_service_off'))
-            elif (var == "yes" or var == "on"):
-                sql.set_clean_service(chat.id, True)
-                update.effective_message.reply_text(
-                    tld(chat.id, 'welcome_clean_service_on'))
-            else:
-                update.effective_message.reply_text(
-                    tld(chat.id, 'common_invalid_arg'),
-                    parse_mode=ParseMode.MARKDOWN)
-        else:
-            update.effective_message.reply_text(tld(chat.id,
-                                                    'common_invalid_arg'),
-                                                parse_mode=ParseMode.MARKDOWN)
+    user = update.effective_user  # type: Optional[User]
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
     else:
-        curr = sql.clean_service(chat.id)
-        if curr:
-            update.effective_message.reply_text(tld(
-                chat.id, 'welcome_clean_service_on'),
-                parse_mode=ParseMode.MARKDOWN)
+        if chat.type == "private":
+            return
         else:
-            update.effective_message.reply_text(tld(
-                chat.id, 'welcome_clean_service_off'),
+            chat_id = update.effective_chat.id
+    if len(args) >= 1:
+        var = args[0]
+        if (var == "no" or var == "off"):
+            sql.set_clean_service(chat_id, False)
+            update.effective_message.reply_text(
+                tld(chat_id, 'welcome_clean_service_off'))
+        elif (var == "yes" or var == "on"):
+            sql.set_clean_service(chat_id, True)
+            update.effective_message.reply_text(
+                tld(chat_id, 'welcome_clean_service_on'))
+        else:
+            update.effective_message.reply_text(
+                tld(chat_id, 'common_invalid_arg'),
                 parse_mode=ParseMode.MARKDOWN)
+    else:
+        update.effective_message.reply_text(tld(chat_id,
+                                                'common_invalid_arg'),
+                                            parse_mode=ParseMode.MARKDOWN)
 
 
 @user_admin
 def welcome(update: Update, context: CallbackContext):
     args = context.args
     chat = update.effective_chat  # type: Optional[Chat]
+    user = update.effective_user  # type: Optional[User]
     # if no args, show current replies.
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
+        chat_name = context.bot.getChat(conn).title
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+            chat_name = chat.title
     if len(args) == 0 or args[0].lower() == "noformat":
         noformat = args and args[0].lower() == "noformat"
         pref, welcome_m, cust_content, welcome_type = sql.get_welc_pref(
-            chat.id)
-        prev_welc = sql.get_clean_pref(chat.id)
+            chat_id)
+        prev_welc = sql.get_clean_pref(chat_id)
         if prev_welc:
             prev_welc = True
         else:
             prev_welc = False
-        cleanserv = sql.clean_service(chat.id)
-        getcur, cur_value, cust_text = sql.welcome_security(chat.id)
+        cleanserv = sql.clean_service(chat_id)
+        getcur, cur_value, cust_text = sql.welcome_security(chat_id)
         if getcur:
             welcsec = "True "
         else:
             welcsec = "False "
         if cur_value[:1] == "0":
-            welcsec += tld(chat.id, 'welcome_mute_time_short_none')
+            welcsec += tld(chat_id, 'welcome_mute_time_short_none')
         else:
-            welcsec += tld(chat.id,
+            welcsec += tld(chat_id,
                            'welcome_mute_time_short').format(cur_value)
 
-        text = tld(chat.id,
+        text = tld(chat_id,
                    'welcome_settings').format(pref, prev_welc, cleanserv,
                                               welcsec, cust_text)
         update.effective_message.reply_text(text,
                                             parse_mode=ParseMode.MARKDOWN)
 
         if welcome_type == sql.Types.BUTTON_TEXT or welcome_type == sql.Types.TEXT:
-            buttons = sql.get_welc_buttons(chat.id)
+            buttons = sql.get_welc_buttons(chat_id)
             if noformat:
                 welcome_m += revert_buttons(buttons)
                 update.effective_message.reply_text(welcome_m)
@@ -676,17 +722,17 @@ def welcome(update: Update, context: CallbackContext):
                 send(update, welcome_m, keyboard, sql.DEFAULT_WELCOME)
 
         else:
-            buttons = sql.get_welc_buttons(chat.id)
+            buttons = sql.get_welc_buttons(chat_id)
             if noformat:
                 welcome_m += revert_buttons(buttons)
-                ENUM_FUNC_MAP[welcome_type](chat.id,
+                ENUM_FUNC_MAP[welcome_type](chat_id,
                                             cust_content,
                                             caption=welcome_m)
 
             else:
                 keyb = build_keyboard(buttons)
                 keyboard = InlineKeyboardMarkup(keyb)
-                ENUM_FUNC_MAP[welcome_type](chat.id,
+                ENUM_FUNC_MAP[welcome_type](chat_id,
                                             cust_content,
                                             caption=welcome_m,
                                             reply_markup=keyboard,
@@ -694,39 +740,49 @@ def welcome(update: Update, context: CallbackContext):
 
     elif len(args) >= 1:
         if args[0].lower() in ("on", "yes"):
-            sql.set_welc_preference(str(chat.id), True)
+            sql.set_welc_preference(str(chat_id), True)
             update.effective_message.reply_text(
                 tld(chat.id, 'welcome_greet_set_on'))
 
         elif args[0].lower() in ("off", "no"):
-            sql.set_welc_preference(str(chat.id), False)
+            sql.set_welc_preference(str(chat_id), False)
             update.effective_message.reply_text(
                 tld(chat.id, 'welcome_greet_set_off'))
 
         else:
             # idek what you're writing, say yes or no
             update.effective_message.reply_text(
-                tld(chat.id, 'common_invalid_arg'))
+                tld(chat_id, 'common_invalid_arg'))
 
 
 @user_admin
 def goodbye(update: Update, context: CallbackContext):
     args = context.args
     chat = update.effective_chat  # type: Optional[Chat]
-
+    user = update.effective_user  # type: Optional[User]
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
+        chat_name = context.bot.getChat(conn).title
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+            chat_name = chat.title
     if len(args) == 0 or args[0] == "noformat":
         noformat = args and args[0] == "noformat"
         pref, goodbye_m, cust_content, goodbye_type = sql.get_gdbye_pref(
-            chat.id)
+            chat_id)
         if cust_content == None:
             cust_content = goodbye_m
 
         update.effective_message.reply_text(tld(
-            chat.id, 'welcome_goodbye_settings').format(pref),
+            chat_id, 'welcome_goodbye_settings').format(pref),
             parse_mode=ParseMode.MARKDOWN)
 
         if goodbye_type == sql.Types.BUTTON_TEXT:
-            buttons = sql.get_gdbye_buttons(chat.id)
+            buttons = sql.get_gdbye_buttons(chat_id)
             if noformat:
                 goodbye_m += revert_buttons(buttons)
                 update.effective_message.reply_text(goodbye_m)
@@ -738,17 +794,17 @@ def goodbye(update: Update, context: CallbackContext):
                 send(update, goodbye_m, keyboard, sql.DEFAULT_GOODBYE)
 
         else:
-            buttons = sql.get_gdbye_buttons(chat.id)
+            buttons = sql.get_gdbye_buttons(chat_id)
             if noformat:
                 goodbye_m += revert_buttons(buttons)
-                ENUM_FUNC_MAP[goodbye_type](chat.id,
+                ENUM_FUNC_MAP[goodbye_type](chat_id,
                                             cust_content,
                                             caption=goodbye_m)
 
             else:
                 keyb = build_keyboard(buttons)
                 keyboard = InlineKeyboardMarkup(keyb)
-                ENUM_FUNC_MAP[goodbye_type](chat.id,
+                ENUM_FUNC_MAP[goodbye_type](chat_id,
                                             cust_content,
                                             caption=goodbye_m,
                                             reply_markup=keyboard,
@@ -756,21 +812,21 @@ def goodbye(update: Update, context: CallbackContext):
 
     elif len(args) >= 1:
         if args[0].lower() in ("on", "yes"):
-            sql.set_gdbye_preference(str(chat.id), True)
+            sql.set_gdbye_preference(str(chat_id), True)
             try:
                 update.effective_message.reply_text(
-                    tld(chat.id, 'welcome_goodbye_set_on'))
+                    tld(chat_id, 'welcome_goodbye_set_on'))
             except Exception:
                 print("Nut")
 
         elif args[0].lower() in ("off", "no"):
-            sql.set_gdbye_preference(str(chat.id), False)
+            sql.set_gdbye_preference(str(chat_id), False)
             update.effective_message.reply_text(
-                tld(chat.id, 'welcome_goodbye_set_off'))
+                tld(chat_id, 'welcome_goodbye_set_off'))
 
         else:
             # idek what you're writing, say yes or no
-            update.effective_message.reply_text(tld(chat.id,
+            update.effective_message.reply_text(tld(chat_id,
                                                     'common_invalid_arg'),
                                                 parse_mode=ParseMode.MARKDOWN)
 
@@ -781,27 +837,36 @@ def set_welcome(update: Update, context: CallbackContext) -> str:
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
     msg = update.effective_message  # type: Optional[Message]
-
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
+        chat_name = context.bot.getChat(conn).title
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+            chat_name = chat.title
     # If user is not set text and not reply a message
     if not msg.reply_to_message:
         if len(msg.text.split()) == 1:
-            msg.reply_text(tld(chat.id, 'welcome_set_welcome_no_text'),
+            msg.reply_text(tld(chat_id, 'welcome_set_welcome_no_text'),
                            parse_mode="markdown")
             return ""
 
     text, data_type, content, buttons = get_welcome_type(msg)
 
     if data_type is None:
-        msg.reply_text(tld(chat.id, "welcome_set_welcome_no_datatype"))
+        msg.reply_text(tld(chat_id, "welcome_set_welcome_no_datatype"))
         return ""
 
-    sql.set_custom_welcome(chat.id, content, text, data_type, buttons)
-    msg.reply_text(tld(chat.id, 'welcome_set_welcome_success'))
+    sql.set_custom_welcome(chat_id, content, text, data_type, buttons)
+    msg.reply_text(tld(chat_id, 'welcome_set_welcome_success'))
 
     return "<b>{}:</b>" \
            "\n#SET_WELCOME" \
            "\n<b>Admin:</b> {}" \
-           "\nSet the welcome message.".format(escape(chat.title),
+           "\nSet the welcome message.".format(escape(chat_name),
                                                mention_html(user.id, user.first_name))
 
 
@@ -810,13 +875,23 @@ def set_welcome(update: Update, context: CallbackContext) -> str:
 def reset_welcome(update: Update, context: CallbackContext) -> str:
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
-    sql.set_custom_welcome(chat.id, None, sql.DEFAULT_WELCOME, sql.Types.TEXT)
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
+        chat_name = context.bot.getChat(conn).title
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+            chat_name = chat.title
+    sql.set_custom_welcome(chat_id, None, sql.DEFAULT_WELCOME, sql.Types.TEXT)
     update.effective_message.reply_text(
-        tld(chat.id, 'welcome_reset_welcome_success'))
+        tld(chat_id, 'welcome_reset_welcome_success'))
     return "<b>{}:</b>" \
            "\n#RESET_WELCOME" \
            "\n<b>Admin:</b> {}" \
-           "\nReset the welcome message to default.".format(escape(chat.title),
+           "\nReset the welcome message to default.".format(escape(chat_name),
                                                             mention_html(user.id, user.first_name))
 
 
@@ -826,25 +901,35 @@ def set_goodbye(update: Update, context: CallbackContext) -> str:
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
     msg = update.effective_message  # type: Optional[Message]
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
+        chat_name = context.bot.getChat(conn).title
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+            chat_name = chat.title
     text, data_type, content, buttons = get_welcome_type(msg)
 
     # If user is not set text and not reply a message
     if not msg.reply_to_message:
         if len(msg.text.split()) == 1:
-            msg.reply_text(tld(chat.id, 'welcome_set_welcome_no_text'),
+            msg.reply_text(tld(chat_id, 'welcome_set_welcome_no_text'),
                            parse_mode="markdown")
             return ""
 
     if data_type is None:
-        msg.reply_text(tld(chat.id, 'welcome_set_welcome_no_datatype'))
+        msg.reply_text(tld(chat_id, 'welcome_set_welcome_no_datatype'))
         return ""
 
-    sql.set_custom_gdbye(chat.id, content, text, data_type, buttons)
-    msg.reply_text(tld(chat.id, 'welcome_set_goodbye_success'))
+    sql.set_custom_gdbye(chat_id, content, text, data_type, buttons)
+    msg.reply_text(tld(chat_id, 'welcome_set_goodbye_success'))
     return "<b>{}:</b>" \
            "\n#SET_GOODBYE" \
            "\n<b>Admin:</b> {}" \
-           "\nSet the goodbye message.".format(escape(chat.title),
+           "\nSet the goodbye message.".format(escape(chat_name),
                                                mention_html(user.id, user.first_name))
 
 
@@ -853,13 +938,23 @@ def set_goodbye(update: Update, context: CallbackContext) -> str:
 def reset_goodbye(update: Update, context: CallbackContext) -> str:
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
-    sql.set_custom_gdbye(chat.id, None, sql.DEFAULT_GOODBYE, sql.Types.TEXT)
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
+        chat_name = context.bot.getChat(conn).title
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+            chat_name = chat.title
+    sql.set_custom_gdbye(chat_id, None, sql.DEFAULT_GOODBYE, sql.Types.TEXT)
     update.effective_message.reply_text(
-        tld(chat.id, 'welcome_reset_goodbye_success'))
+        tld(chat_id, 'welcome_reset_goodbye_success'))
     return "<b>{}:</b>" \
            "\n#RESET_GOODBYE" \
            "\n<b>Admin:</b> {}" \
-           "\nReset the goodbye message.".format(escape(chat.title),
+           "\nReset the goodbye message.".format(escape(chat_name),
                                                  mention_html(user.id, user.first_name))
 
 
@@ -869,34 +964,43 @@ def clean_welcome(update: Update, context: CallbackContext) -> str:
     args = context.args
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
-
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
+        chat_name = context.bot.getChat(conn).title
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+            chat_name = chat.title
     if not args:
-        clean_pref = sql.get_clean_pref(chat.id)
+        clean_pref = sql.get_clean_pref(chat_id)
         if clean_pref:
             update.effective_message.reply_text(
-                tld(chat.id, 'welcome_clean_curr_on'))
+                tld(chat_id, 'welcome_clean_curr_on'))
         else:
             update.effective_message.reply_text(
-                tld(chat.id, 'welcome_clean_curr_off'))
+                tld(chat_id, 'welcome_clean_curr_off'))
         return ""
 
     if args[0].lower() in ("on", "yes"):
-        sql.set_clean_welcome(str(chat.id), True)
+        sql.set_clean_welcome(str(chat_id), True)
         update.effective_message.reply_text(
-            tld(chat.id, 'welcome_clean_set_on'))
+            tld(chat_id, 'welcome_clean_set_on'))
         return "<b>{}:</b>" \
                "\n#CLEAN_WELCOME" \
                "\n<b>Admin:</b> {}" \
-               "\nHas toggled clean welcomes to <code>ON</code>.".format(escape(chat.title),
+               "\nHas toggled clean welcomes to <code>ON</code>.".format(escape(chat_name),
                                                                          mention_html(user.id, user.first_name))
     elif args[0].lower() in ("off", "no"):
-        sql.set_clean_welcome(str(chat.id), False)
+        sql.set_clean_welcome(str(chat_id), False)
         update.effective_message.reply_text(
-            tld(chat.id, 'welcome_clean_set_off'))
+            tld(chat_id, 'welcome_clean_set_off'))
         return "<b>{}:</b>" \
                "\n#CLEAN_WELCOME" \
                "\n<b>Admin:</b> {}" \
-               "\nHas toggled clean welcomes to <code>OFF</code>.".format(escape(chat.title),
+               "\nHas toggled clean welcomes to <code>OFF</code>.".format(escape(chat_name),
                                                                           mention_html(user.id, user.first_name))
     else:
         # idek what you're writing, say yes or no
@@ -920,58 +1024,46 @@ LEFT_MEM_HANDLER = MessageHandler(Filters.status_update.left_chat_member,
 WELC_PREF_HANDLER = CommandHandler("welcome",
                                    welcome,
                                    pass_args=True,
-                                   run_async=True,
-                                   filters=Filters.chat_type.groups)
+                                   run_async=True)
 GOODBYE_PREF_HANDLER = CommandHandler("goodbye",
                                       goodbye,
                                       pass_args=True,
-                                      run_async=True,
-                                      filters=Filters.chat_type.groups)
+                                      run_async=True)
 SET_WELCOME = CommandHandler("setwelcome",
                              set_welcome,
-                             run_async=True,
-                             filters=Filters.chat_type.groups)
+                             run_async=True)
 SET_GOODBYE = CommandHandler("setgoodbye",
                              set_goodbye,
-                             run_async=True,
-                             filters=Filters.chat_type.groups)
+                             run_async=True)
 RESET_WELCOME = CommandHandler("resetwelcome",
                                reset_welcome,
-                               run_async=True,
-                               filters=Filters.chat_type.groups)
+                               run_async=True)
 RESET_GOODBYE = CommandHandler("resetgoodbye",
                                reset_goodbye,
-                               run_async=True,
-                               filters=Filters.chat_type.groups)
+                               run_async=True)
 CLEAN_WELCOME = CommandHandler("cleanwelcome",
                                clean_welcome,
                                pass_args=True,
-                               run_async=True,
-                               filters=Filters.chat_type.groups)
+                               run_async=True)
 SECURITY_HANDLER = CommandHandler("welcomemute",
                                   security,
                                   pass_args=True,
-                                  run_async=True,
-                                  filters=Filters.chat_type.groups)
+                                  run_async=True)
 SECURITY_MUTE_HANDLER = CommandHandler("welcomemutetime",
                                        security_mute,
                                        pass_args=True,
-                                       run_async=True,
-                                       filters=Filters.chat_type.groups)
+                                       run_async=True)
 SECURITY_BUTTONTXT_HANDLER = CommandHandler("setmutetext",
                                             security_text,
                                             pass_args=True,
-                                            run_async=True,
-                                            filters=Filters.chat_type.groups)
+                                            run_async=True)
 SECURITY_BUTTONRESET_HANDLER = CommandHandler("resetmutetext",
                                               security_text_reset,
-                                              run_async=True,
-                                              filters=Filters.chat_type.groups)
+                                              run_async=True)
 CLEAN_SERVICE_HANDLER = CommandHandler("cleanservice",
                                        cleanservice,
                                        pass_args=True,
-                                       run_async=True,
-                                       filters=Filters.chat_type.groups)
+                                       run_async=True)
 
 help_callback_handler = CallbackQueryHandler(check_bot_button,
                                              pattern=r"check_bot_",
