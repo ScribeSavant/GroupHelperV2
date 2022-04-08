@@ -123,6 +123,8 @@ def send(update, message, keyboard, backup_message):
 
 def new_member(update: Update, context: CallbackContext):
     chat = update.effective_chat  # type: Optional[Chat]
+    context.bot.delete_message(
+        chat_id=update.message.chat_id, message_id=update.message.message_id)
 
     should_welc, cust_welcome, cust_content, welc_type = sql.get_welc_pref(
         chat.id)
@@ -165,11 +167,8 @@ def new_member(update: Update, context: CallbackContext):
                     cleanserv = sql.clean_service(chat.id)
                     # Clean service welcome
                     if cleanserv:
-                        try:
-                            context.bot.delete_message(
-                                chat.id, update.message.message_id)
-                        except BadRequest:
-                            pass
+                        context.bot.delete_message(
+                            chat_id=update.message.chat_id, message_id=update.message.message_id)
                         reply = False
                     # Formatting text
                     # edge case of empty name - occurs for some bugs.
