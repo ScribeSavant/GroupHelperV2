@@ -22,17 +22,17 @@ RUN apk add --no-cache --virtual .build-deps \
     fontconfig
 
 # Rust Compiler
-RUN apk add cargo
+RUN apk add --no-cache cargo
 
-RUN update-ms-fonts && \
+RUN update-ms-fonts --no-cache && \
     fc-cache -f
 
 RUN mkdir /data
 
 RUN chmod 777 /data
-RUN git clone https://squirrelpython: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@github.com/thedeveloper12/GroupHelperV2.git -b main /data/GroupHelperV6
+RUN git clone --no-cache https://squirrelpython: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@github.com/thedeveloper12/GroupHelperV2.git -b main /data/GroupHelperV6
 
-RUN pip install -r /data/GroupHelperV6/requirements.txt
+RUN pip install -r /data/GroupHelperV6/requirements.txt --no-cache
 RUN apk del .build-deps
 
 
