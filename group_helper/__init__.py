@@ -17,21 +17,21 @@ class GroupHelperConfig:
         """
         group_helper configuration class
         """
-        self.api_id: int = kwargs.get('API_ID', None)
-        self.api_hash: str = kwargs.get('API_HASH', None)
-        self.bot_token: str = kwargs.get('BOT_TOKEN', None)
+        self.api_id: int = kwargs.get('api_id', None)
+        self.api_hash: str = kwargs.get('api_hash', None)
+        self.bot_token: str = kwargs.get('bot_token', None)
         self.DATABASE_URL: str = kwargs.get('DATABASE_URL', None)
-        self.load: List[str] = kwargs.get('LOAD', list())
-        self.no_load: List[str] = kwargs.get('NO_LOAD', list())
-        self.del_cmds: Optional[bool] = kwargs.get('DEL_CMDS', False)
+        self.load: List[str] = kwargs.get('load', list())
+        self.no_load: List[str] = kwargs.get('no_load', list())
+        self.del_cmds: Optional[bool] = kwargs.get('del_cmds', False)
         self.strict_antispam: Optional[bool] = kwargs.get(
-            'STRICT_ANTISPAM', False)
-        self.workers: Optional[int] = kwargs.get('WORKERS', 4)
-        self.owner_id: int = kwargs.get('OWNER_ID', None)
-        self.sudo_users: Set[int] = kwargs.get('SUDO_USERS', set())
-        self.whitelist_users: Set[int] = kwargs.get('WHITELIST_USERS', set())
-        self.message_dump: Optional[int] = kwargs.get('MESSAGE_DUMP', 0)
-        self.spamwatch_api: Optional[str] = kwargs.get('SPAMWATCH_API', "")
+            'strict_antispam', False)
+        self.workers: Optional[int] = kwargs.get('workers', 4)
+        self.owner_id: int = kwargs.get('owner_id', None)
+        self.sudo_users: Set[int] = kwargs.get('sudo_users', set())
+        self.whitelist_users: Set[int] = kwargs.get('whitelist_users', set())
+        self.message_dump: Optional[int] = kwargs.get('message_dump', 0)
+        self.spamwatch_api: Optional[str] = kwargs.get('spamwatch_api', "")
         self.spamwatch_client: Optional[Any] = None
         self.telethon_client: Optional[Any] = None
         self.updater: Optional[Any] = None
@@ -51,10 +51,10 @@ if sys.version_info < (3, 8, 0):
 
 try:
     config_file = dict(os.environ)
-    config_file['LOAD'] = config_file['LOAD'].split()
-    config_file['NO_LOAD'] = config_file['NO_LOAD'].split()
-    config_file['SUDO_USERS'] = config_file['SUDO_USERS'].split()
-    config_file['WHITELIST_USERS'] = config_file['WHITELIST_USERS'].split()
+    config_file['load'] = config_file['load'].split()
+    config_file['no_load'] = config_file['no_load'].split()
+    config_file['sudo_users'] = config_file['sudo_users'].split()
+    config_file['whitelist_users'] = config_file['whitelist_users'].split()
 except Exception as error:
     logging.error(
         f"Could not load config file due to a {type(error).__name__}: {error}")
