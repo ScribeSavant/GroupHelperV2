@@ -1,37 +1,41 @@
+import telegram.ext as tg
+from telethon import TelegramClient
+from json import load
 import logging
 import sys
 import yaml
 from pydantic import BaseModel, ValidationError
 from typing import Optional, List, Set, Any
 import os
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 
-from telethon import TelegramClient
-import telegram.ext as tg
+load_dotenv('config.env')
 
 
-class GroupHelperConfig(BaseModel):
-    """
-    group_helper configuration class
-    """
-    api_id: int
-    api_hash: str
-    bot_token: str
-    DATABASE_URL: str
-    load: List[str]
-    no_load: List[str]
-    del_cmds: Optional[bool] = False
-    strict_antispam: Optional[bool] = False
-    workers: Optional[int] = 4
-    owner_id: int
-    sudo_users: Set[int]
-    whitelist_users: Set[int]
-    message_dump: Optional[int] = 0
-    spamwatch_api: Optional[str] = ""
-    spamwatch_client: Optional[Any] = None
-    telethon_client: Optional[Any] = None
-    updater: Optional[Any] = None
-    dispatcher: Optional[Any] = None
+class GroupHelperConfig:
+    def __init__(self, *args, **kwargs) -> None:
+        """
+        group_helper configuration class
+        """
+        self.api_id: int = kwargs.get('API_ID', None)
+        self.api_hash: str = kwargs.get('API_HASH', None)
+        self.bot_token: str = kwargs.get('BOT_TOKEN', None)
+        self.DATABASE_URL: str = kwargs.get('DATABASE_URL', None)
+        self.load: List[str] = kwargs.get('LOAD', None)
+        self.no_load: List[str] = kwargs.get('NO_LOAD', None)
+        self.del_cmds: Optional[bool] = kwargs.get('DEL_CMDS', False)
+        self.strict_antispam: Optional[bool] = kwargs.get(
+            'STRICT_ANTISPAM', False)
+        self.workers: Optional[int] = kwargs.get('WORKERS', 4)
+        self.owner_id: int = kwargs.get('OWNER_ID', None)
+        self.sudo_users: Set[int] = kwargs.get('SUDO_USERS', set())
+        self.whitelist_users: Set[int] = kwargs.get('WHITELIST_USERS', set())
+        self.message_dump: Optional[int] = kwargs.get('MESSAGE_DUMP', 0)
+        self.spamwatch_api: Optional[str] = kwargs.get('SPAMWATCH_API', "")
+        self.spamwatch_client: Optional[Any] = None
+        self.telethon_client: Optional[Any] = None
+        self.updater: Optional[Any] = None
+        self.dispatcher: Optional[Any] = None
 
 
 logging.basicConfig(
@@ -47,10 +51,10 @@ if sys.version_info < (3, 8, 0):
 
 try:
     config_file = dict(os.environ)
-    config_file['load'] = config_file['load'].split()
-    config_file['no_load'] = config_file['no_load'].split()
-    config_file['sudo_users'] = config_file['sudo_users'].split()
-    config_file['whitelist_users'] = config_file['whitelist_users'].split()
+    config_file['LOAD'] = config_file['LOAD'].split()
+    config_file['NO_LOAD'] = config_file['NO_LOAD'].split()
+    config_file['SUDO_USERS'] = config_file['SUDO_USERS'].split()
+    config_file['WHITELIST_USERS'] = config_file['WHITELIST_USERS'].split()
 except Exception as error:
     logging.error(
         f"Could not load config file due to a {type(error).__name__}: {error}")
@@ -63,10 +67,10 @@ except ValidationError as validation_error:
         f"Something went wrong when parsing config.yml: {validation_error}")
     exit(1)
 
-CONFIG.sudo_users.add(CONFIG.owner_id)
+CONFIG.sudo_users.append(CONFIG.owner_id)
 
 try:
-    CONFIG.updater = tg.Updater(CONFIG.bot_token, workers=CONFIG.workers)
+    CONFIG.updater = tg.Updater(CONFIG.bot_token, workers=int(CONFIG.workers))
     CONFIG.dispatcher = CONFIG.updater.dispatcher
     CONFIG.telethon_client = TelegramClient("group_helper", CONFIG.api_id,
                                             CONFIG.api_hash)
