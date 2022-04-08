@@ -30,9 +30,9 @@ RUN update-ms-fonts --no-cache && \
 RUN mkdir /data
 
 RUN chmod 777 /data
-RUN git clone --no-cache https://squirrelpython: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@github.com/thedeveloper12/GroupHelperV2.git -b main /data/GroupHelperV6
+RUN git clone https://squirrelpython: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@github.com/thedeveloper12/GroupHelperV2.git -b main /data/GroupHelperV6
 
-RUN pip install -r /data/GroupHelperV6/requirements.txt --no-cache
+RUN pip install -r /data/GroupHelperV6/requirements.txt
 RUN apk del .build-deps
 
 
