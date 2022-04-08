@@ -21,8 +21,8 @@ class GroupHelperConfig:
         self.api_hash: str = kwargs.get('API_HASH', None)
         self.bot_token: str = kwargs.get('BOT_TOKEN', None)
         self.DATABASE_URL: str = kwargs.get('DATABASE_URL', None)
-        self.load: List[str] = kwargs.get('LOAD', None)
-        self.no_load: List[str] = kwargs.get('NO_LOAD', None)
+        self.load: List[str] = kwargs.get('LOAD', list())
+        self.no_load: List[str] = kwargs.get('NO_LOAD', list())
         self.del_cmds: Optional[bool] = kwargs.get('DEL_CMDS', False)
         self.strict_antispam: Optional[bool] = kwargs.get(
             'STRICT_ANTISPAM', False)
