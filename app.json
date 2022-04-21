@@ -64,6 +64,11 @@
             "required": false,
             "value": "5"
         },
+        "whitelist_users": {
+            "description": "Custom PM Message Count for PM Auto Ban feature. Also known as Pmpermit Module.",
+            "required": false,
+            "value": "5"
+        },
         "workers": {
             "description": "Custom message for PM Auto Ban feature. Also known as Pmpermit Module.",
             "required": false
