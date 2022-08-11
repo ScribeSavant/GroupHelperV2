@@ -1,5 +1,5 @@
 #### Bot lib ####
-python-telegram-bot==13.0.0
+python-telegram-bot>=13.0.0
 git+https://github.com/squirrelpython/pymodm
 pymongo[srv]
 telethon

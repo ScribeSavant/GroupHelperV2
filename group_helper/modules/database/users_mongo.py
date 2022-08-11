@@ -6,7 +6,7 @@ from pymodm.fields import CharField, BigIntegerField
 
 class Users(MongoModel):
     user_id = BigIntegerField()
-    username = CharField()
+    username = CharField(blank=True)
 
     class Meta:
         final = True
