@@ -53,11 +53,11 @@ except Exception as error:
 
 
 CONFIG = GroupHelperConfig(**config_file)
-connect(CONFIG.MONGO_URL)
 CONFIG.sudo_users.append(CONFIG.owner_id)
 
 try:
     CONFIG.updater = tg.Updater(CONFIG.bot_token, workers=int(CONFIG.workers))
+    connect(CONFIG.MONGO_URL + f"/{CONFIG.updater.bot.name}")
     CONFIG.dispatcher = CONFIG.updater.dispatcher
     CONFIG.telethon_client = TelegramClient("group_helper", CONFIG.api_id,
                                             CONFIG.api_hash)
@@ -71,3 +71,4 @@ except Exception as telegram_error:
         f"Could not initialize Telegram client due to a {type(telegram_error).__name__}: {telegram_error}"
     )
     exit(1)
+
