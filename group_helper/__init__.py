@@ -57,7 +57,7 @@ CONFIG.sudo_users.append(CONFIG.owner_id)
 
 try:
     CONFIG.updater = tg.Updater(CONFIG.bot_token, workers=int(CONFIG.workers))
-    connect(CONFIG.MONGO_URL, CONFIG.updater.bot.name)
+    connect(CONFIG.MONGO_URL, databse_name= CONFIG.updater.bot.name)
     CONFIG.dispatcher = CONFIG.updater.dispatcher
     CONFIG.telethon_client = TelegramClient("group_helper", CONFIG.api_id,
                                             CONFIG.api_hash)
