@@ -11,7 +11,8 @@ import tldextract
 from group_helper import CONFIG
 from group_helper.modules.disable import DisableAbleCommandHandler
 from group_helper.modules.helper_funcs.chat_status import user_admin, user_not_admin
-from group_helper.modules.sql import urlblacklist_sql as sql
+from group_helper.modules.database import urlbalcklist_mongo as sql
+# from group_helper.modules.database import urlblacklist_sql as sql
 from group_helper.modules.tr_engine.strings import tld
 from group_helper.modules.connection import connected
 
@@ -21,6 +22,8 @@ def add_blacklist_url(update: Update, context: CallbackContext):
     chat = update.effective_chat
     message = update.effective_message
     urls = message.text.split(None, 1)
+    if sql.is_delete_all(chat.id):
+        return message.reply_text(tld(chat.id, "delete_all_enabled_err"), parse_mode=ParseMode.HTML)
     if len(urls) > 1:
         urls = urls[1]
         to_blacklist = list(
@@ -51,6 +54,44 @@ def add_blacklist_url(update: Update, context: CallbackContext):
                 parse_mode=ParseMode.HTML)
     else:
         message.reply_text(tld(chat.id, "url_blacklist_invalid_2"))
+
+
+@user_admin
+def blacklist_all_url(update: Update, context: CallbackContext):
+    chat = update.effective_chat
+    message = update.effective_message
+    user = update.effective_user
+    args = context.args
+    conn = connected(update, context, user.id)
+    if conn:
+        chat_id = conn
+    else:
+        if chat.type == "private":
+            return
+        else:
+            chat_id = update.effective_chat.id
+    if len(args) >= 1:
+        print(args)
+        var = args[0]
+        if (var == "no" or var == "off"):
+            sql.disable_delete_all(chat_id)
+            update.effective_message.reply_text(
+                tld(chat_id, 'delete_all_disabled'))
+        
+        elif (var == "yes" or var == "on"):
+            sql.enable_delete_all(chat_id)
+            update.effective_message.reply_text(
+                tld(chat_id, 'delete_all_enabled'))
+    
+       
+        else:
+            update.effective_message.reply_text(
+                tld(chat_id, 'common_invalid_arg'),
+                parse_mode=ParseMode.MARKDOWN)
+    else:
+        update.effective_message.reply_text(tld(chat_id,
+                                                'common_invalid_arg'),
+                                            parse_mode=ParseMode.MARKDOWN)
 
 
 @user_admin
@@ -104,8 +145,7 @@ def del_blacklist_url(update: Update, context: CallbackContext):
     message = update.effective_message
     parsed_entities = message.parse_entities(types=["url"])
     if sql.is_delete_all(chat.id):
-        if 'http' in message.text or 'wwww' in message.text or 'https' in message.text or 'bit.ly' in message.text:
-            message.delete()
+            return message.delete()
     extracted_domains = []
     for obj, url in parsed_entities.items():
         extract_url = tldextract.extract(url)
@@ -160,6 +200,10 @@ GET_BLACKLISTED_URLS = CommandHandler("geturl",
                                       run_async=True,
                                       filters=Filters.chat_type.groups)
 
+BLACKLIST_ALL_URL = CommandHandler("blacklist_all_url",
+                                      blacklist_all_url,
+                                      run_async=True)
+
 URL_DELETE_HANDLER = MessageHandler(Filters.entity("url"),
                                     del_blacklist_url,
                                     run_async=True)
@@ -171,3 +215,4 @@ CONFIG.dispatcher.add_handler(ADD_URL_BLACKLIST_HANDLER)
 CONFIG.dispatcher.add_handler(RM_BLACKLIST_URL_HANDLER)
 CONFIG.dispatcher.add_handler(GET_BLACKLISTED_URLS)
 CONFIG.dispatcher.add_handler(URL_DELETE_HANDLER)
+CONFIG.dispatcher.add_handler(BLACKLIST_ALL_URL)

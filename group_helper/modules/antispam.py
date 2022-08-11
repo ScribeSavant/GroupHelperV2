@@ -5,7 +5,7 @@ from telegram import Update, ParseMode
 from telegram.ext import CommandHandler, MessageHandler, Filters
 from telegram.ext.callbackcontext import CallbackContext
 
-import group_helper.modules.sql.antispam_sql as sql
+import group_helper.modules.database.antispam_mongo as sql
 from group_helper import CONFIG
 from group_helper.modules.helper_funcs.chat_status import user_admin, is_user_admin
 

@@ -5,7 +5,8 @@ from telegram import Chat, Update, User
 from telegram.ext import CommandHandler
 from telegram.ext.callbackcontext import CallbackContext
 
-import group_helper.modules.sql.connection_sql as sql
+# import group_helper.modules.database.connection_sql as sql
+import group_helper.modules.database.connection_mongo as sql
 from group_helper import CONFIG
 from group_helper.modules.helper_funcs.chat_status import user_admin
 
@@ -65,9 +66,7 @@ def connect_chat(update: Update, context: CallbackContext):
                 connection_status = sql.connect(
                     update.effective_message.from_user.id, connect_chat)
                 if connection_status:
-                    chat_name = CONFIG.dispatcher.bot.getChat(
-                        connected(update, context, user.id,
-                                  need_admin=False)).title
+                    chat_name = CONFIG.dispatcher.bot.getChat(connected(update, context, user.id, need_admin=False)).title
                     update.effective_message.reply_text(
                         tld(chat.id, "connection_success").format(chat_name),
                         parse_mode=ParseMode.MARKDOWN)
@@ -76,14 +75,11 @@ def connect_chat(update: Update, context: CallbackContext):
                     history = sql.get_history(user.id)
                     if history:
                         # Vars
-                        if history.chat_id1:
-                            history1 = int(history.chat_id1)
-                        if history.chat_id2:
-                            history2 = int(history.chat_id2)
-                        if history.chat_id3:
-                            history3 = int(history.chat_id3)
-                        if history.updated:
-                            number = history.updated
+
+                        history1 = int(history.chat_id1)
+                        history2 = int(history.chat_id2)
+                        history3 = int(history.chat_id3)
+                        number = int(history.updated)
 
                         if number == 1 and connect_chat != history2 and connect_chat != history3:
                             history1 = connect_chat
@@ -97,15 +93,9 @@ def connect_chat(update: Update, context: CallbackContext):
                         else:
                             print("Error")
 
-                        print(history.updated)
-                        print(number)
-
-                        sql.add_history(user.id, history1, history2, history3,
-                                        number)
-                        # print(history.user_id, history.chat_id1, history.chat_id2, history.chat_id3, history.updated)
+                        sql.add_history(user.id, history1, history2, history3, number)
                     else:
-                        sql.add_history(user.id, connect_chat, "0", "0", 2)
-                    # Rebuild user's keyboard
+                        sql.add_history(user.id, connect_chat, 0, 0, 2)
                     keyboard(update, context)
 
                 else:
@@ -118,7 +108,6 @@ def connect_chat(update: Update, context: CallbackContext):
             update.effective_message.reply_text(
                 tld(chat.id, "connection_err_no_chatid"))
             history = sql.get_history(user.id)
-            # print(history.user_id, history.chat_id1, history.chat_id2, history.chat_id3, history.updated)
 
     elif update.effective_chat.type == 'supergroup':
         connect_chat = chat.id

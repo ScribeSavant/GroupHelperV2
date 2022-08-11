@@ -19,7 +19,8 @@ FILENAME = __name__.rsplit(".", 1)[-1]
 if is_module_loaded(FILENAME):
     from group_helper.modules.helper_funcs.chat_status import user_admin, is_user_admin
 
-    from group_helper.modules.sql import disable_sql as sql
+    # from group_helper.modules.database import disable_sql as sql
+    from group_helper.modules.database import disable_mongo as sql
 
     DISABLE_CMDS = []
     DISABLE_OTHER = []

@@ -5,7 +5,8 @@ from typing import Optional
 
 from group_helper import CONFIG
 from group_helper.modules.helper_funcs.chat_status import user_admin
-from group_helper.modules.sql import log_channel_sql as sql
+# from group_helper.modules.database import log_channel_sql as sql
+from group_helper.modules.database import log_channel_mongo as sql
 from group_helper.modules.tr_engine.strings import tld
 
 from telegram import Bot, Update, ParseMode, Message, Chat

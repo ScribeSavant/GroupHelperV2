@@ -1,102 +1,64 @@
 import threading
-
-from sqlalchemy import Column, String, Boolean
-
-from group_helper.modules.sql import SESSION, BASE
+from pymodm import MongoModel
+from pymodm.fields import BooleanField, CharField
 
 
-class Permissions(BASE):
-    __tablename__ = "permissions"
-    chat_id = Column(String(14), primary_key=True)
-    # Booleans are for "is this locked", _NOT_ "is this allowed"
-    audio = Column(Boolean, default=False)
-    voice = Column(Boolean, default=False)
-    contact = Column(Boolean, default=False)
-    video = Column(Boolean, default=False)
-    videonote = Column(Boolean, default=False)
-    document = Column(Boolean, default=False)
-    photo = Column(Boolean, default=False)
-    sticker = Column(Boolean, default=False)
-    gif = Column(Boolean, default=False)
-    url = Column(Boolean, default=False)
-    bots = Column(Boolean, default=False)
-    forward = Column(Boolean, default=False)
-    game = Column(Boolean, default=False)
-    location = Column(Boolean, default=False)
-
-    def __init__(self, chat_id):
-        self.chat_id = str(chat_id)  # ensure string
-        self.audio = False
-        self.voice = False
-        self.contact = False
-        self.video = False
-        self.videonote = False
-        self.document = False
-        self.photo = False
-        self.sticker = False
-        self.gif = False
-        self.url = False
-        self.bots = False
-        self.forward = False
-        self.game = False
-        self.location = False
-
-    def __repr__(self):
-        return "<Permissions for %s>" % self.chat_id
+class Permissions(MongoModel):
+    chat_id = CharField(max_length=14)
+    audio = BooleanField(default=False)
+    voice = BooleanField(default=False)
+    contact = BooleanField(default=False)
+    video = BooleanField(default=False)
+    videonote = BooleanField(default=False)
+    document = BooleanField(default=False)
+    photo = BooleanField(default=False)
+    sticker = BooleanField(default=False)
+    gif = BooleanField(default=False)
+    url = BooleanField(default=False)
+    bots = BooleanField(default=False)
+    forward = BooleanField(default=False)
+    game = BooleanField(default=False)
+    location = BooleanField(default=False)
+    
+    class Meta:
+        final = True
+        collection_name = 'permissions'
 
 
-class Restrictions(BASE):
-    __tablename__ = "restrictions"
-    chat_id = Column(String(14), primary_key=True)
-    # Booleans are for "is this restricted", _NOT_ "is this allowed"
-    messages = Column(Boolean, default=False)
-    media = Column(Boolean, default=False)
-    other = Column(Boolean, default=False)
-    preview = Column(Boolean, default=False)
+class Restrictions(MongoModel):
+    chat_id = CharField(max_length=14)
+    messages = BooleanField(default=False)
+    media = BooleanField(default=False)
+    other = BooleanField(default=False)
+    preview = BooleanField(default=False)
 
-    def __init__(self, chat_id):
-        self.chat_id = str(chat_id)  # ensure string
-        self.messages = False
-        self.media = False
-        self.other = False
-        self.preview = False
-
-    def __repr__(self):
-        return "<Restrictions for %s>" % self.chat_id
-
-
-Permissions.__table__.create(checkfirst=True)
-Restrictions.__table__.create(checkfirst=True)
+    class Meta:
+        final = True
+        collection_name = 'restrictions'
 
 PERM_LOCK = threading.RLock()
 RESTR_LOCK = threading.RLock()
 
 
-def init_permissions(chat_id, reset=False):
-    curr_perm = SESSION.query(Permissions).get(str(chat_id))
-    if reset:
-        SESSION.delete(curr_perm)
-        SESSION.flush()
-    perm = Permissions(str(chat_id))
-    SESSION.add(perm)
-    SESSION.commit()
-    return perm
 
+def init_permissions(chat_id, reset=False):
+    curr_perm = Permissions.objects.get({'chat_id': str(chat_id)})
+    if reset:
+        curr_perm.delete()
+    cur = Permissions(str(chat_id)).save()
+    return cur
 
 def init_restrictions(chat_id, reset=False):
-    curr_restr = SESSION.query(Restrictions).get(str(chat_id))
+    curr_restr = Restrictions.objects.get({'chat_id': str(chat_id)})
     if reset:
-        SESSION.delete(curr_restr)
-        SESSION.flush()
-    restr = Restrictions(str(chat_id))
-    SESSION.add(restr)
-    SESSION.commit()
+        curr_restr.delete()
+    restr = Restrictions(str(chat_id)).save()
     return restr
 
 
 def update_lock(chat_id, lock_type, locked):
     with PERM_LOCK:
-        curr_perm = SESSION.query(Permissions).get(str(chat_id))
+        curr_perm = Permissions.objects.get({'chat_id': str(chat_id)})
         if not curr_perm:
             curr_perm = init_permissions(chat_id)
 
@@ -128,14 +90,11 @@ def update_lock(chat_id, lock_type, locked):
             curr_perm.game = locked
         elif lock_type == 'location':
             curr_perm.location = locked
-
-        SESSION.add(curr_perm)
-        SESSION.commit()
-
+        curr_perm.save()
 
 def update_restriction(chat_id, restr_type, locked):
     with RESTR_LOCK:
-        curr_restr = SESSION.query(Restrictions).get(str(chat_id))
+        curr_restr = Restrictions.objects.get({'chat_id': str(chat_id)})
         if not curr_restr:
             curr_restr = init_restrictions(chat_id)
 
@@ -152,14 +111,11 @@ def update_restriction(chat_id, restr_type, locked):
             curr_restr.media = locked
             curr_restr.other = locked
             curr_restr.preview = locked
-        SESSION.add(curr_restr)
-        SESSION.commit()
+        curr_restr.save()
 
 
 def is_locked(chat_id, lock_type):
-    curr_perm = SESSION.query(Permissions).get(str(chat_id))
-    SESSION.close()
-
+    curr_perm = Permissions.objects.get({'chat_id': str(chat_id)})
     if not curr_perm:
         return False
 
@@ -194,8 +150,7 @@ def is_locked(chat_id, lock_type):
 
 
 def is_restr_locked(chat_id, lock_type):
-    curr_restr = SESSION.query(Restrictions).get(str(chat_id))
-    SESSION.close()
+    curr_restr = Restrictions.objects.get({'chat_id': str(chat_id)})
 
     if not curr_restr:
         return False
@@ -211,30 +166,21 @@ def is_restr_locked(chat_id, lock_type):
     elif lock_type == "all":
         return curr_restr.messages and curr_restr.media and curr_restr.other and curr_restr.preview
 
-
 def get_locks(chat_id):
-    try:
-        return SESSION.query(Permissions).get(str(chat_id))
-    finally:
-        SESSION.close()
-
-
+    return Permissions.objects.get({'chat_id': str(chat_id)})
+ 
 def get_restr(chat_id):
-    try:
-        return SESSION.query(Restrictions).get(str(chat_id))
-    finally:
-        SESSION.close()
-
+    return Restrictions.objects.get({'chat_id': str(chat_id)})
 
 def migrate_chat(old_chat_id, new_chat_id):
     with PERM_LOCK:
-        perms = SESSION.query(Permissions).get(str(old_chat_id))
+        perms = Permissions.objects.get({'chat_id': str(old_chat_id)})
         if perms:
             perms.chat_id = str(new_chat_id)
-        SESSION.commit()
+        perms.save()
 
     with RESTR_LOCK:
-        rest = SESSION.query(Restrictions).get(str(old_chat_id))
+        rest = Restrictions.objects.get({'chat_id': str(old_chat_id)})
         if rest:
             rest.chat_id = str(new_chat_id)
-        SESSION.commit()
+        rest.save()

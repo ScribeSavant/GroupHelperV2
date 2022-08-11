@@ -11,7 +11,12 @@ from telegram.ext import MessageHandler, Filters, CommandHandler, CallbackQueryH
 from telegram.ext.callbackcontext import CallbackContext
 from telegram.utils.helpers import mention_html
 from group_helper.modules.connection import connected
-import group_helper.modules.sql.welcome_sql as sql
+import group_helper.modules.database.welcome_mongo as sql
+import group_helper.modules.database.feds_mongo as fed_sql
+import group_helper.modules.database.antispam_mongo as anti_spam_sql
+import group_helper.modules.database.admins_mongo as admin_sql
+
+
 from group_helper import CONFIG
 from group_helper.modules.helper_funcs.chat_status import user_admin, is_user_ban_protected
 from group_helper.modules.helper_funcs.misc import build_keyboard, revert_buttons
@@ -40,16 +45,13 @@ ENUM_FUNC_MAP = {
 
 # do not async
 def send(update, message, keyboard, backup_message):
-    print('hello')
     chat = update.effective_chat
     cleanserv = sql.clean_service(chat.id)
-    print(cleanserv)
     reply = update.message.message_id
     # Clean service welcome
     if cleanserv:
         try:
-            CONFIG.dispatcher.bot.delete_message(chat.id,
-                                                 update.message.message_id)
+            CONFIG.dispatcher.bot.delete_message(chat.id, update.message.message_id)
         except BadRequest:
             pass
         reply = False
@@ -123,12 +125,35 @@ def send(update, message, keyboard, backup_message):
     return msg
 
 
+
+
+def check_spams(user, chat_id, context):
+    chats_limit = admin_sql.get_chat_limit()
+    anti_spam_sql.add_chat_to_user(int(user.id), str(chat_id))
+    user_count = anti_spam_sql.user_chats_count(int(user.id))
+    print(chats_limit, user_count)
+    if chats_limit and user_count > chats_limit:
+        user_chats = anti_spam_sql.get_user_joined_chats(int(user.id))
+        if anti_spam_sql.is_user_limited(int(user.id)):
+            print(f'Limitng for chat {user_chats[-1]}')
+            context.bot.send_message(int(user_chats[-1]), f'The user called {user.full_name} has exceeded the chat limit i muting him')
+            context.bot.restrict_chat_member(int(user_chats[-1]), user.id, ChatPermissions(can_send_messages=False))
+            return True
+        for chat in user_chats:
+            print(f'Limitng for chat {chat}')
+            context.bot.send_message(int(chat), f'The user called {user.full_name} has exceeded the chat limit i muting him')
+            context.bot.restrict_chat_member(int(chat), user.id, ChatPermissions(can_send_messages=False))
+        anti_spam_sql.limit_the_user(int(user.id))
+        return True
+    return False
+            
+
 def new_member(update: Update, context: CallbackContext):
     chat = update.effective_chat  # type: Optional[Chat]
-
-    should_welc, cust_welcome, cust_content, welc_type = sql.get_welc_pref(
-        chat.id)
-    print(should_welc)
+    new_members = update.effective_message.new_chat_members
+    fed_id = fed_sql.get_fed_id(update.message.chat.id)
+    fed_chats = fed_sql.all_fed_chats(fed_id)
+    should_welc, cust_welcome, cust_content, welc_type = sql.get_welc_pref(chat.id)
     if cust_welcome:
         cust_welcome = markdown_to_html(cust_welcome)
 
@@ -136,17 +161,15 @@ def new_member(update: Update, context: CallbackContext):
         sent = None
         new_members = update.effective_message.new_chat_members
         for new_mem in new_members:
-            # Give start information when add bot to group
+            if check_spams(new_mem, chat.id, context):
+                return
 
             try:
                 if CONFIG.spamwatch_api != None:
                     headers = {
                         'Authorization': f'Bearer {CONFIG.spamwatch_api}'
                     }
-                    resp = requests.get(
-                        "https://api.spamwat.ch/banlist/{new_mem.id}",
-                        headers=headers,
-                        timeout=5)
+                    resp = requests.get("https://api.spamwat.ch/banlist/{new_mem.id}", headers=headers, timeout=5)
                     if resp.status_code == 200:
                         return
             except:
@@ -154,12 +177,8 @@ def new_member(update: Update, context: CallbackContext):
 
             if new_mem.id == context.bot.id:
                 context.bot.send_message(
-                    CONFIG.message_dump,
-                    "I have been added to {} with ID: <pre>{}</pre>".format(
-                        chat.title, chat.id),
-                    parse_mode=ParseMode.HTML)
-                context.bot.send_message(chat.id,
-                                         tld(chat.id, 'welcome_added_to_grp'))
+                    CONFIG.message_dump,"I have been added to {} with ID: <pre>{}</pre>".format(chat.title, chat.id), parse_mode=ParseMode.HTML)
+                context.bot.send_message(chat.id, tld(chat.id, 'welcome_added_to_grp'))
 
             else:
                 # If welcome message is media, send with appropriate function
@@ -197,8 +216,7 @@ def new_member(update: Update, context: CallbackContext):
                     # Build keyboard
                     buttons = sql.get_welc_buttons(chat.id)
                     keyb = build_keyboard(buttons)
-                    getsec, mutetime, custom_text = sql.welcome_security(
-                        chat.id)
+                    getsec, mutetime, custom_text = sql.welcome_security(chat.id)
 
                     member = chat.get_member(new_mem.id)
                     # If user ban protected don't apply security on him

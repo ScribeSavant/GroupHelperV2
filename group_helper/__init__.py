@@ -1,14 +1,10 @@
 import telegram.ext as tg
 from telethon import TelegramClient
-from json import load
 import logging
-import sys
-import yaml
-from pydantic import BaseModel, ValidationError
 from typing import Optional, List, Set, Any
 import os
 from dotenv import load_dotenv
-
+from pymodm import connect
 load_dotenv('config.env')
 
 
@@ -21,11 +17,11 @@ class GroupHelperConfig:
         self.api_hash: str = kwargs.get('API_HASH', None)
         self.bot_token: str = kwargs.get('BOT_TOKEN', None)
         self.DATABASE_URL: str = kwargs.get('DATABASE_URL', None)
+        self.MONGO_URL = str = kwargs.get('MONGO_URL', None)
         self.load: List[str] = kwargs.get('LOAD', list())
         self.no_load: List[str] = kwargs.get('NO_LOAD', list())
         self.del_cmds: Optional[bool] = kwargs.get('DEL_CMDS', False)
-        self.strict_antispam: Optional[bool] = kwargs.get(
-            'STRICT_ANTISPAM', False)
+        self.strict_antispam: Optional[bool] = kwargs.get('STRICT_ANTISPAM', False)
         self.workers: Optional[int] = kwargs.get('WORKERS', 4)
         self.owner_id: int = kwargs.get('OWNER_ID', None)
         self.sudo_users: Set[int] = kwargs.get('SUDO_USERS', set())
@@ -43,11 +39,6 @@ logging.basicConfig(
     level=logging.INFO)
 logging.info("Starting group_helper...")
 
-if sys.version_info < (3, 8, 0):
-    logging.error(
-        "Your Python version is too old for group_helper to run, please update to Python 3.8 or above"
-    )
-    exit(1)
 
 try:
     config_file = dict(os.environ)
@@ -60,13 +51,9 @@ except Exception as error:
         f"Could not load config file due to a {type(error).__name__}: {error}")
     exit(1)
 
-try:
-    CONFIG = GroupHelperConfig(**config_file)
-except ValidationError as validation_error:
-    logging.error(
-        f"Something went wrong when parsing config.yml: {validation_error}")
-    exit(1)
 
+CONFIG = GroupHelperConfig(**config_file)
+connect(CONFIG.MONGO_URL)
 CONFIG.sudo_users.append(CONFIG.owner_id)
 
 try:

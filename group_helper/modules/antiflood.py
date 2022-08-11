@@ -10,7 +10,8 @@ from telegram.utils.helpers import mention_html
 from group_helper import CONFIG
 from group_helper.modules.helper_funcs.chat_status import is_user_admin, user_admin, can_restrict
 from group_helper.modules.log_channel import loggable
-from group_helper.modules.sql import antiflood_sql as sql
+# from group_helper.modules.database import antiflood_sql as sql
+from group_helper.modules.database import antiflood_mongo as sql
 
 from group_helper.modules.tr_engine.strings import tld
 
@@ -38,7 +39,7 @@ def check_flood(update: Update, context: CallbackContext) -> str:
     try:
         context.bot.restrict_chat_member(
             chat.id, user.id, ChatPermissions(can_send_messages=False))
-        msg.reply_text(tld(chat.id, "flood_mute"))
+        msg.reply_text(tld(chat.id, "flood_mute"), parse_mode='MARKDOWN')
 
         return tld(chat.id, "flood_logger_success").format(
             html.escape(chat.title), mention_html(user.id, user.first_name))

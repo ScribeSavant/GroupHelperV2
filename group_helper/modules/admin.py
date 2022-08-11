@@ -12,7 +12,7 @@ from group_helper.modules.disable import DisableAbleCommandHandler
 from group_helper.modules.helper_funcs.chat_status import bot_admin, user_admin, can_pin
 from group_helper.modules.helper_funcs.extraction import extract_user
 from group_helper.modules.log_channel import loggable
-from group_helper.modules.sql import admin_sql as sql
+from group_helper.modules.database import admins_mongo as sql
 from group_helper.modules.tr_engine.strings import tld
 
 from group_helper.modules.connection import connected
@@ -244,6 +244,8 @@ def invite(update: Update, context: CallbackContext):
 
 def adminlist(update: Update, context: CallbackContext):
     chat = update.effective_chat
+    if chat.type == 'private':
+        return
     administrators = update.effective_chat.get_administrators()
     text = tld(chat.id, "admin_list").format(
         update.effective_chat.title

@@ -1021,3 +1021,6 @@ helpers_user_not_in_db: |
 #string_handling
 helpers_string_handling_invalid_time_amount: Invalid time amount specified.
 helpers_string_handling_invalid_time_type: "Invalid time type specified. Expected m, h, d, got: {}."
+delete_all_enabled_err: Currently it is blocking all urls!, if you want to block a specific url, please turn off this setting with the command <code>/blacklist_all_url off</code> first
+delete_all_enabled: Now all urls are blocked!
+delete_all_disabled: Now only certain urls are blocked!

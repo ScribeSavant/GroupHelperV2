@@ -4,7 +4,7 @@ from telegram import Chat, ChatMember, Update
 from telegram.ext.callbackcontext import CallbackContext
 
 from group_helper import CONFIG
-import group_helper.modules.sql.admin_sql as admin_sql
+import group_helper.modules.database.admins_mongo as admins_mongo
 from group_helper.modules.tr_engine.strings import tld
 
 
@@ -148,7 +148,7 @@ def user_admin(func):
         elif CONFIG.del_cmds and " " not in update.effective_message.text:
             update.effective_message.delete()
 
-        elif (admin_sql.command_reaction(chat.id) == True):
+        elif (admins_mongo.command_reaction(chat.id) == True):
             update.effective_message.reply_text(
                 tld(chat.id, 'helpers_user_not_admin'))
 

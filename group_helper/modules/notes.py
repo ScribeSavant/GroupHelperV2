@@ -8,7 +8,8 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, Filters, MessageHandler
 from telegram.ext.callbackcontext import CallbackContext
 
-import group_helper.modules.sql.notes_sql as sql
+# import group_helper.modules.database.notes_sql as sql
+import group_helper.modules.database.notes_mongo as sql
 from group_helper import CONFIG
 from group_helper.modules.disable import DisableAbleCommandHandler
 from group_helper.modules.helper_funcs.chat_status import user_admin
@@ -194,7 +195,6 @@ def save(update: Update, context: CallbackContext):
 
     note_name, text, data_type, content, buttons = get_note_type(msg)
     note_name = note_name.lower()
-
     if data_type is None:
         msg.reply_text(tld(chat.id, "save_invalid"))
         return
@@ -205,9 +205,8 @@ def save(update: Update, context: CallbackContext):
                            text,
                            data_type,
                            buttons=buttons,
-                           file=content)
-        msg.reply_text(tld(chat.id,
-                           "save_success").format(note_name, chat_name,
+                           files=content)
+        msg.reply_text(tld(chat.id,"save_success").format(note_name, chat_name,
                                                   note_name, note_name),
                        parse_mode=ParseMode.MARKDOWN)
     else:
@@ -216,7 +215,7 @@ def save(update: Update, context: CallbackContext):
                            text,
                            data_type,
                            buttons=buttons,
-                           file=content)
+                           files=content)
         msg.reply_text(tld(chat.id,
                            "save_updated").format(note_name, chat_name,
                                                   note_name, note_name),
@@ -271,7 +270,7 @@ def list_notes(update: Update, context: CallbackContext):
     note_list = sql.get_all_chat_notes(chat_id)
 
     for note in note_list:
-        note_name = " • `{}`\n".format(note.name.lower())
+        note_name = " • `{}`\n".format(note.lower())
         if len(msg) + len(note_name) > MAX_MESSAGE_LENGTH:
             update.effective_message.reply_text(msg,
                                                 parse_mode=ParseMode.MARKDOWN)

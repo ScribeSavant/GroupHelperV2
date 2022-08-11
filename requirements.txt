@@ -1,5 +1,7 @@
 #### Bot lib ####
-python-telegram-bot>=13.0.0
+python-telegram-bot==13.0.0
+git+https://github.com/squirrelpython/pymodm
+pymongo[srv]
 telethon
 #################
 aiohttp>=2.2.5
@@ -10,13 +12,10 @@ googletrans>=3.1.0a0
 hurry.filesize
 markdown2
 Pillow>=4.2.0
-psycopg2-binary
-pydantic
 python-rapidjson
 python-dotenv
 PyYAML
 requests>=2.20.0
-sqlalchemy
 tldextract
 wikipedia
 covid

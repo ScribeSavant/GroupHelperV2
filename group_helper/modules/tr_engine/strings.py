@@ -2,7 +2,7 @@
 import yaml
 from codecs import encode, decode
 import logging
-from group_helper.modules.sql.locales_sql import prev_locale
+from group_helper.modules.database.locales_mongo import prev_locale
 
 LANGUAGES = ['en-US']
 
@@ -15,7 +15,7 @@ for i in LANGUAGES:
 def tld(chat_id, t, show_none=True):
     language = prev_locale(chat_id)
     if language:
-        locale = language.locale_name
+        locale = language['locale_name']
         if locale == 'en-US' and t in strings['en-US']:
             result = decode(
                 encode(strings['en-US'][t], 'latin-1', 'backslashreplace'),
@@ -49,7 +49,7 @@ def tld(chat_id, t, show_none=True):
 def tld_list(chat_id, t):
     language = prev_locale(chat_id)
     if language:
-        locale = language.locale_name
+        locale = language['locale_name']
         if locale == 'en-US' and t in strings['en-US']:
             return strings['en-US'][t]
         elif locale == 'id' and t in strings['id']:

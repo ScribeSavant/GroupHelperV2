@@ -7,7 +7,8 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, MessageHandler, Filters
 from telegram.ext.callbackcontext import CallbackContext
 
-import group_helper.modules.sql.blacklist_sql as sql
+# import group_helper.modules.database.blacklist_sql as sql
+import group_helper.modules.database.blacklist_mongo as sql
 from group_helper import CONFIG
 from group_helper.modules.disable import DisableAbleCommandHandler
 from group_helper.modules.helper_funcs.chat_status import user_admin, user_not_admin
@@ -64,7 +65,7 @@ def add_blacklist(update: Update, context: CallbackContext):
     msg = update.effective_message
     chat = update.effective_chat
     user = update.effective_user
-    words = msg.text.split(None, 1)
+    words = context.args
 
     conn = connected(update, context, user.id)
     if conn:
@@ -77,8 +78,8 @@ def add_blacklist(update: Update, context: CallbackContext):
         else:
             chat_name = chat.title
 
-    if len(words) > 1:
-        text = words[1]
+    if len(words) >= 1:
+        text = ' '.join(words)
         to_blacklist = list(
             set(trigger.strip() for trigger in text.split("\n")
                 if trigger.strip()))
@@ -166,7 +167,7 @@ def del_blacklist(update: Update, context: CallbackContext):
     to_match = extract_text(message)
     if not to_match:
         return
-
+        
     chat_filters = sql.get_chat_blacklist(chat.id)
     for trigger in chat_filters:
         pattern = r"( |^|[^\w])" + re.escape(trigger) + r"( |$|[^\w])"

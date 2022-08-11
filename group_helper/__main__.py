@@ -259,7 +259,6 @@ def main():
     """
     Starts group_helper
     """
-
     start_handler = CommandHandler("start",
                                    start,
                                    pass_args=True,

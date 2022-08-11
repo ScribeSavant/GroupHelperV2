@@ -6,7 +6,8 @@ from telegram.ext import CommandHandler
 from telegram.ext.callbackcontext import CallbackContext
 from telegram.utils.helpers import escape_markdown
 
-import group_helper.modules.sql.rules_sql as sql
+# import group_helper.modules.database.rules_sql as sql
+import group_helper.modules.database.rules_mongo as sql
 from group_helper import CONFIG
 from group_helper.modules.helper_funcs.chat_status import user_admin
 from group_helper.modules.helper_funcs.string_handling import markdown_parser

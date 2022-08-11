@@ -8,7 +8,7 @@ from telegram.ext.callbackcontext import CallbackContext
 from group_helper import CONFIG
 from group_helper.modules.connection import connected
 from group_helper.modules.helper_funcs.chat_status import user_admin
-from group_helper.modules.sql.locales_sql import switch_to_locale, prev_locale
+from group_helper.modules.database.locales_mongo import switch_to_locale, prev_locale
 from group_helper.modules.tr_engine.strings import tld, LANGUAGES
 from group_helper.modules.tr_engine.list_locale import list_locales
 
@@ -51,7 +51,7 @@ def locale(update: Update, context: CallbackContext):
     else:
         LANGUAGE = prev_locale(chat.id)
         if LANGUAGE:
-            locale = LANGUAGE.locale_name
+            locale = LANGUAGE['locale_name']
             native_lang = list_locales[locale]
             message.reply_text(tld(
                 chat.id, "language_current_locale").format(native_lang),
@@ -78,7 +78,7 @@ def locale_button(update: Update, context: CallbackContext):
 
     try:
         LANGUAGE = prev_locale(chat.id)
-        locale = LANGUAGE.locale_name
+        locale = LANGUAGE['locale_name']
         curr_lang = list_locales[locale]
     except Exception:
         curr_lang = "English (US)"
@@ -89,7 +89,7 @@ def locale_button(update: Update, context: CallbackContext):
 
     if conn:
         try:
-            chatlng = prev_locale(conn).locale_name
+            chatlng = prev_locale(conn)['locale_name']
             chatlng = list_locales[chatlng]
             text += tld(chat.id, "language_chat_language").format(chatlng)
         except Exception:

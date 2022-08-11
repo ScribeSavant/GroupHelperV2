@@ -9,7 +9,8 @@ from telegram.ext import CommandHandler, MessageHandler, Filters
 from telegram.ext.callbackcontext import CallbackContext
 from telegram.utils.helpers import mention_html
 
-import group_helper.modules.sql.locks_sql as sql
+# import group_helper.modules.database.locks_sql as sql
+import group_helper.modules.database.locks_mongo as sql
 from group_helper import CONFIG
 from group_helper.modules.disable import DisableAbleCommandHandler
 from group_helper.modules.helper_funcs.chat_status import can_delete, is_user_admin, user_not_admin, user_admin, \
@@ -299,11 +300,11 @@ def build_lock_message(chat, chatP, user, chatname):
         restr = sql.get_restr(chat.id)
 
     res = tld(chatP.id, "locks_list").format(
-        chatname, locks.sticker, locks.audio, locks.voice, locks.document,
-        locks.video, locks.videonote, locks.contact, locks.photo, locks.gif,
-        locks.url, locks.bots, locks.forward, locks.game, locks.location,
-        restr.messages, restr.media, restr.other, restr.preview,
-        all([restr.messages, restr.media, restr.other, restr.preview]))
+        chatname, locks['sticker'], locks['audio'], locks['voice'], locks['document'],
+        locks['video'], locks['videonote'], locks['contact'], locks['photo'], locks['gif'],
+        locks['url'], locks['bots'], locks['forward'], locks['game'], locks['location'],
+        restr['messages'], restr['media'], restr['other'], restr['preview'],
+        all([restr['messages'], restr['media'], restr['other'], restr['preview']]))
     return res
 
 

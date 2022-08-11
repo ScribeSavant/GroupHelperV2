@@ -20,8 +20,8 @@ from group_helper.modules.helper_funcs.misc import split_message
 from group_helper.modules.helper_funcs.string_handling import split_quotes
 from group_helper.modules.log_channel import loggable
 from group_helper.modules.rules import send_rules
-from group_helper.modules.sql import warns_sql as sql
-import group_helper.modules.sql.rules_sql as rules_sql
+from group_helper.modules.database import warns_mongo as sql
+import group_helper.modules.database.rules_mongo as rules_sql
 from group_helper.modules.tr_engine.strings import tld
 
 WARN_HANDLER_GROUP = 9

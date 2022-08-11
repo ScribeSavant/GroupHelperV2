@@ -1,6 +1,6 @@
 import telegram.ext as tg
 from telegram import Update
-import group_helper.modules.sql.antispam_sql as sql
+import group_helper.modules.database.antispam_mongo as sql
 
 CMD_STARTERS = ('/', '!')
 

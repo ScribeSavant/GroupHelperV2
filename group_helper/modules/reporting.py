@@ -11,7 +11,7 @@ from telegram.utils.helpers import mention_html
 from group_helper import CONFIG
 from group_helper.modules.helper_funcs.chat_status import user_not_admin, user_admin
 from group_helper.modules.log_channel import loggable
-from group_helper.modules.sql import reporting_sql as sql
+from group_helper.modules.database import reporting_mongo as sql
 from group_helper.modules.tr_engine.strings import tld
 
 REPORT_GROUP = 5

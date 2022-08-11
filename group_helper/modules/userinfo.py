@@ -6,7 +6,7 @@ from telegram import ParseMode, MAX_MESSAGE_LENGTH
 from telegram.ext.callbackcontext import CallbackContext
 from telegram.utils.helpers import escape_markdown
 
-import group_helper.modules.sql.userinfo_sql as sql
+import group_helper.modules.database.userinfo_mongo as sql
 from group_helper import CONFIG
 from group_helper.modules.disable import DisableAbleCommandHandler
 from group_helper.modules.helper_funcs.extraction import extract_user

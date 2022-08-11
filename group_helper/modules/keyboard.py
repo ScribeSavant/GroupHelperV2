@@ -7,14 +7,14 @@ from telegram import Update
 from telegram.ext import CommandHandler
 from telegram.ext.callbackcontext import CallbackContext
 
-import group_helper.modules.sql.connection_sql as con_sql
+import group_helper.modules.database.connection_mongo as con_sql
 
 
 def keyboard(update: Update, context: CallbackContext):
     chat = update.effective_chat
     user = update.effective_user
     conn_id = con_sql.get_connected_chat(user.id)
-    if conn_id and not conn_id == False:
+    if conn_id:
         btn1 = "/disconnect - {}".format(tld(chat.id, "keyboard_disconnect"))
         btn2 = ""
         btn3 = ""
@@ -58,7 +58,7 @@ def keyboard(update: Update, context: CallbackContext):
             KeyboardButton("/notes - {}".format(tld(chat.id,
                                                     "keyboard_notes")))
         ], [KeyboardButton(btn1)], [KeyboardButton(btn2)],
-                                          [KeyboardButton(btn3)]]))
+                                          [KeyboardButton(btn3)]], resize_keyboard=True))
 
 
 KEYBOARD_HANDLER = CommandHandler(["keyboard"], keyboard)
