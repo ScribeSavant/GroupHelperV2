@@ -30,12 +30,12 @@ RUN update-ms-fonts --no-cache && \
 RUN mkdir /data
 
 RUN chmod 777 /data
-RUN git clone https://squirrelpython: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@github.com/thedeveloper12/GroupHelperV2.git -b main /data/RailwayIsShit
+RUN git clone https://squirrelpython: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@github.com/thedeveloper12/GroupHelperV2.git -b main /data/FuckRailway
 
-RUN pip install -r /data/RailwayIsShit/requirements.txt
+RUN pip install -r /data/FuckRailway/requirements.txt
 RUN apk del .build-deps
 
 
 
-WORKDIR /data/RailwayIsShit
+WORKDIR /data/FuckRailway
 CMD ["python", "-m", "group_helper"]
